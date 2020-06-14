@@ -1,0 +1,17 @@
+time per generation (1e5 chromosomes)
+        mutate 139.356 ms
+        select 444.938 ms
+    total: 552.183 ms
+
+Se introduciamo una pipeline riduciamo il tempo a quello della "select". 
+Il problema è che l'operazione "select" non è facilmente parallelizzabile in quanto tutti i worker devono accedere in modo concorrente all'heap contenente i migliori cromosomi.
+Lo speedup della "select" è dato da 1 + t_local / t_state. La porzione non parallelizzabile è quella in cui scriviamo nell'heap in quanto la lettura può avvenire in parallelo.
+Quante volte accade che heap.front() > g2[i] rispetto ai casi totali? Circa il 35% delle volte accediamo in scrittura (t_state). Questo ci porta ad uno speedup massimo minore di 3.
+
+Heap separati: se assegniamo un heap a ciascun worker possiamo svolgere il lavoro in parallelo.
+Il problema è che il risultato sarà diverso:
+    -worker 1: 3 4 genera 1 2 -> heap: 1 2
+    -worker 2: 7 8 genera 5 6 -> heap: 5 6
+otteniamo la generazione 1 2 5 6 peggiore di 1 2 3 4 
+
+Cicli separati: possiamo evitare di fare il merge degli heap mantenere ogni generazione separata. In questo modo eliminiamo il punto di centralizzazione migliorando le performance. problema: ogni popolazione è più piccola e non facciamo il crossover con le altre popolazioni.
