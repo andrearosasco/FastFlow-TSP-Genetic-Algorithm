@@ -30,15 +30,35 @@ int main(int argc, char * argv[]) {
     auto cmp = [&](vector<int> x, vector<int> y) { return (graph.path_length(x)) < (graph.path_length(y)); };
 
     auto genes = get_first_generation(k, p - 1);
-
     make_heap(genes.begin(), genes.end(), cmp);
     int i;
     long exect;
-    
+    long acc = 0;
+    long acc2 = 0;
+    auto t0 = chrono::system_clock::now();
     for(i = 0; i < g; i++){      
+        auto t1 = chrono::system_clock::now();
         auto new_genes = evolve(genes);
-        genes = natural_selection(genes, new_genes, graph);
+        acc += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
+        auto t2 = chrono::system_clock::now();
+        // for(int i = 0; i < new_genes.size(); i++){
+        //     auto t1 = chrono::system_clock::now();
+        //     if( graph.path_length(new_genes[i]) < graph.path_length(genes.front()) ){
+        //         pop_heap(genes.begin(), genes.end(), cmp);
+        //         genes.pop_back();
+        //         genes.push_back(new_genes[i]);
+        //         push_heap(genes.begin(), genes.end(), cmp);
+        //     }
+        //     acc += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
+        // }
+        natural_selection(genes, new_genes, cmp);
+        acc2 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t2).count();
     }
+
+    auto elapsed = chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t0).count();
+    cout << "Time: " << elapsed << endl;
+    cout << "Evolve: " << acc << endl;
+    cout << "Selection: " << acc2 << endl;
 
     cout << endl << "Number of possible hamiltonian cycles: " << factorial(p - 1) / 2 << endl;
 

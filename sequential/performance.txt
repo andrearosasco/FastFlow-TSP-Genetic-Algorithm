@@ -1,12 +1,39 @@
-time per generation (1e5 chromosomes)
-        mutate 139.356 ms
-        select 444.938 ms
-    total: 552.183 ms
+Problema: aumentando il numero di cromosomi il tempo aumenta in modo non lineare (selection (heap insertion)).
+    anche aumentando le iterazioni il tempo non è completamente lineare, infatti le scritture in heap diminuiscono più avanziamo con le generazione.
 
-Se introduciamo una pipeline riduciamo il tempo a quello della "select". 
+Ho deciso di effettuare le misurazioni con i seguenti parametri:
+-numero cromosomi 1e4
+-numero generazioni 1e3
+-numero nodi 20
+-seed 1234
+
+laptop
+tempo totale: 30,665,177 us (31 secondi)
+    evolve: 15,330,191 us
+    select: 13,378,852 us
+
+supercomputer
+tempo totale:  33,429,391 us (33 secondi) -> 3.3 us per cromosoma
+    evolve: 16,118,946 us -> 1.6 us per cromosoma
+    select: 14,978,629 us -> 1.4 us per cromosoma
+
+Aumentando a 1e5 il numero di cromosomi il tempo impiegato dalla select diventa maggiore di quello della evolve perché, oltre alle k operazioni necessarie a trovare la popolazione migliore, abbiamo da mantenere un heap di dimensione k.
+
+Se introduciamo una pipeline riduciamo il tempo a quello della dello stage con tempo minore. 
 Il problema è che l'operazione "select" non è facilmente parallelizzabile in quanto tutti i worker devono accedere in modo concorrente all'heap contenente i migliori cromosomi.
-Lo speedup della "select" è dato da 1 + t_local / t_state. La porzione non parallelizzabile è quella in cui scriviamo nell'heap in quanto la lettura può avvenire in parallelo.
-Quante volte accade che heap.front() > g2[i] rispetto ai casi totali? Circa il 35% delle volte accediamo in scrittura (t_state). Questo ci porta ad uno speedup massimo minore di 3.
+Lo speedup della "select" è dato da 1 + t_local / t_state. A livello di codice la select passa più tempo ad accedere allo stato che a svolgere operazioni locali. La peculiarità è che possiamo permettere accessi in lettura paralleli in modo che gli unici rallentamenti sensibili siano causati da scritture nell'heap.
+
+Quante volte accade che heap.front() > g2[i] rispetto ai casi totali? Circa il 35% delle volte accediamo in scrittura (t_state).
+Dato il numero abbastanza basso di accessi decido di implementare e testare la soluzione per vedere lo speedup al quale possiamo puntare.
+
+Utilizzando 1 worker nella farm:
+tempo totale: 30,202,489 us (30 secondi): 3 us
+    -evolve: 20,030,075 us -> 2 us
+    -select: 16,609,424 us -> 1.7 us
+
+Utilizzando due worker nella farm:
+    -select 1: 19,990,266
+    -select 2: 20,119,832
 
 Heap separati: se assegniamo un heap a ciascun worker possiamo svolgere il lavoro in parallelo.
 Il problema è che il risultato sarà diverso:

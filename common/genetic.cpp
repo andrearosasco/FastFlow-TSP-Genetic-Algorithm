@@ -61,47 +61,56 @@ vector<int>* mutation(const vector<int>& g) {
 }
 
 
-vector<vector<int>> evolve(vector<vector<int>> genes) {
-    vector<vector<int>> res;
+vector<vector<int>> evolve(vector<vector<int>> chsomes) {
+    // vector<vector<int>> res;
     int po_crossover = 92; // percentuale di cromosomi per crossover (gli altri vengono mutati)
-    int no_crossover = round(genes.size() * po_crossover / 200.) * 2; //arrotonda al numero pari più vicino
+    int no_crossover = round(chsomes.size() * po_crossover / 200.) * 2; //arrotonda al numero pari più vicino
 
 
-    int s = 0;
-    bool ready = false;
-    vector<int> g1;
-    for(int i = 0; i < genes.size(); i++) {
-        float p = (rand() % 100) / 100.;
-        if(p < (no_crossover - s) / (float)(genes.size() - i)){
-            if(!ready) // eseguiamo il crossover solo quando abbaimo una coppia di geni
-                g1 = genes[i];
-            else {
-                auto co = crossover(g1, genes[i]);
-                res.push_back(*co[0]);
-                res.push_back(*co[1]);
-            }
-            ready = !ready;
-            s++;
-        }
-        else {
-            res.push_back(*mutation(genes[i]));
+    // int s = 0;
+    // bool ready = false;
+    // vector<int> g1;
+    // for(int i = 0; i < genes.size(); i++) {
+    //     float p = (rand() % 100) / 100.;
+    //     if(p < (no_crossover - s) / (float)(genes.size() - i)){
+    //         if(!ready) // eseguiamo il crossover solo quando abbaimo una coppia di geni
+    //             g1 = genes[i];
+    //         else {
+    //             auto co = crossover(g1, genes[i]);
+    //             res.push_back(*co[0]);
+    //             res.push_back(*co[1]);
+    //         }
+    //         ready = !ready;
+    //         s++;
+    //     }
+    //     else {
+    //         res.push_back(*mutation(genes[i]));
+    //     }
+    // }
+    // return res;
+    random_shuffle (chsomes.begin(), chsomes.end());
+
+    for(int j = 0; j < chsomes.size(); j++) {
+        if(j < no_crossover){
+            auto res = crossover(chsomes[j], chsomes[j+1]); j++;
+            chsomes[j] = *res[0];
+            chsomes[j+1] = *res[1];
+        } else {
+            auto res = mutation(chsomes[j]);
+            chsomes[j] = *res;
         }
     }
-    return res;
+
+    return chsomes;
 }
 
-vector<vector<int>> natural_selection(vector<vector<int>> g1, vector<vector<int>> g2, TspGraph graph) {
-    auto cmp = [&](vector<int> x, vector<int> y) { return (graph.path_length(x)) < (graph.path_length(y)); };
-    float w = 0;
+void natural_selection(vector<vector<int>>& g1, const vector<vector<int>>& g2, function<bool(vector<int>, vector<int>)> cmp) {
     for(int i = 0; i < g2.size(); i++){
-        if( graph.path_length(g2[i]) < graph.path_length(g1.front()) ){
-            w++;
+        if( cmp(g2[i], g1.front()) ){
             pop_heap(g1.begin(), g1.end(), cmp);
             g1.pop_back();
             g1.push_back(g2[i]);
             push_heap(g1.begin(), g1.end(), cmp);
         }
     }
-
-    return g1;
 }

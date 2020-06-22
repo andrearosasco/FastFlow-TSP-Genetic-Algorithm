@@ -50,14 +50,18 @@ struct chsomesSelect: ff_node_t<std::vector<int>> {
     chsomesSelect(SynchHeap& heap): heap(heap) {}
 
     std::vector<int>* svc(std::vector<int> * new_chsome) {
-
+        auto t0 = chrono::system_clock::now();
         if( heap.check(*new_chsome) ){
             heap.insert(*new_chsome);
         }
+        acc += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t0).count();
         return new_chsome;
     }
 
+    void svc_end(){cout << "Select: " << acc << endl;}
+
     SynchHeap& heap;
+    long acc = 0;
 };
 
 int main(int argc, char** argv) {
