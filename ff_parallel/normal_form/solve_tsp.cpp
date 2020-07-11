@@ -21,16 +21,16 @@ struct Genetic: ff_node_t<std::vector<int>> {
     vector<int>* svc(vector<int>*) {
         int acc1 = 0;
         int acc2 = 0;
-        unsigned seed = s + get_my_id();
+        // unsigned seed = s + get_my_id();
 
-        auto chsomes = get_first_generation(k, p - 1, seed);
+        auto chsomes = get_first_generation(k, p - 1);
         vector<vector<int>> new_chsomes(k);
         make_heap(chsomes.begin(), chsomes.end(), cmp);
 
         auto t0 = chrono::system_clock::now();
         for(int i = 0; i < gen; i++){  
             auto t1 = chrono::system_clock::now();
-            evolve(chsomes, new_chsomes, seed);
+            evolve(chsomes, new_chsomes);
             acc1 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
             auto t2 = chrono::system_clock::now();
             natural_selection(chsomes, new_chsomes, cmp);

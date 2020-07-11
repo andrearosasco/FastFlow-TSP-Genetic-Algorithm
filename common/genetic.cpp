@@ -7,7 +7,7 @@
 
 using namespace std;
 
-vector<vector<int>> get_first_generation(int population_size, int gene_size, int seed){
+vector<vector<int>> get_first_generation(int population_size, int gene_size){
     vector<vector<int>> res(population_size);
     for(int i = 0; i < population_size; i++) {
         vector<int> *gene = new vector<int>(gene_size);
@@ -19,7 +19,7 @@ vector<vector<int>> get_first_generation(int population_size, int gene_size, int
 }
 
 //possibilmente da vettorializzare
-vector<vector<int>> crossover(const vector<int>& g1, const vector<int>& g2, unsigned seed){
+vector<vector<int>> crossover(const vector<int>& g1, const vector<int>& g2){
 
     vector<int> ng1 = g1;
     vector<int> ng2 = g2;
@@ -53,7 +53,7 @@ vector<vector<int>> crossover(const vector<int>& g1, const vector<int>& g2, unsi
     return res;
 }
 
-vector<int> mutation(const vector<int>& g, unsigned seed) {
+vector<int> mutation(const vector<int>& g) {
     vector<int> res = g;
 
     auto l = max(1, (int)round(g.size() * 0.2));
@@ -72,23 +72,23 @@ vector<int> mutation(const vector<int>& g, unsigned seed) {
 }
 
 
-void evolve(const vector<vector<int>>& chsomes, vector<vector<int>>& res, unsigned seed) {
+void evolve(const vector<vector<int>>& chsomes, vector<vector<int>>& res) {
 
     for(int i = 0; i < chsomes.size(); i++)
         res[i] = chsomes[i];
 
-    int po_crossover = 92; // percentuale di cromosomi per crossover (gli altri vengono mutati)
+    int po_crossover = 70; // percentuale di cromosomi per crossover (gli altri vengono mutati)
     int no_crossover = round(res.size() * po_crossover / 200.) * 2; //arrotonda al numero pari più vicino
 
     random_shuffle (res.begin(), res.end(), rand_x());
 
     for(int j = 0; j < res.size(); j++) {
         if(j < no_crossover){
-            auto aux = crossover(res[j], res[j+1], seed); j++;
+            auto aux = crossover(res[j], res[j+1]); j++;
             res[j] = aux[0];
             res[j+1] = aux[1];
         } else {
-            auto aux = mutation(res[j], seed);
+            auto aux = mutation(res[j]);
             res[j] = aux;
         }
     }
