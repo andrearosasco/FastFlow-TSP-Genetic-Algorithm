@@ -4,6 +4,7 @@
 #include <functional>
 #include <mutex>
 #include <shared_mutex>
+#include <random>
 
 using namespace std;
 
@@ -108,3 +109,38 @@ class SynchHeap {
       sort_heap(heap.begin(), heap.end(), cmp);
     }
 };
+
+// class intRand { 
+//     unsigned int seed;
+// public:
+//     intRand(unsigned seed) : seed(seed) {}
+
+//     int operator()(int limit) {
+//         return (*this)(0, limit);
+//     }
+
+//     int operator()(const int & min, const int & max){
+//       static thread_local std::mt19937 generator(seed);
+//       std::uniform_int_distribution<int> distribution(min,max);
+//       return distribution(generator);
+//     } 
+// };
+
+class rand_x { 
+
+public:
+    rand_x() {}
+
+    int operator()(int limit) {
+        static thread_local std::mt19937 generator;
+        std::uniform_int_distribution<int> distribution(0,limit-1);
+        return distribution(generator);
+    }
+};
+
+
+int intRand(const int & min, const int & max) {
+        static thread_local std::mt19937 generator;
+        std::uniform_int_distribution<int> distribution(min,max);
+        return distribution(generator);
+}

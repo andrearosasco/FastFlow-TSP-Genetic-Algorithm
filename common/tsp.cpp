@@ -44,7 +44,8 @@ class TspGraph {
         for(int i = 0; i < path.size() - 1; i++){
             int to = path[i];
             int from = path[i + 1];
-            length += graph[to][from];
+            int l = graph[to][from];
+            length += l;
         }
         length += graph[path.back()][0];
         return length;

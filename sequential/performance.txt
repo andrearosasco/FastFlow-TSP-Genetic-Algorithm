@@ -8,9 +8,9 @@ Ho deciso di effettuare le misurazioni con i seguenti parametri:
 -seed 1234
 
 laptop
-tempo totale: 30,665,177 us (31 secondi)
-    evolve: 15,330,191 us
-    select: 13,378,852 us
+tempo totale: 24,892,075 us (25 secondi)
+    evolve: 12,448,232 us
+    select: 10,723,356 us
 
 supercomputer
 tempo totale:  33,429,391 us (33 secondi) -> 3.3 us per cromosoma
@@ -31,9 +31,16 @@ tempo totale: 30,202,489 us (30 secondi): 3 us
     -evolve: 20,030,075 us -> 2 us
     -select: 16,609,424 us -> 1.7 us
 
+Il motivo per il quale il tempo totale non è il minimo tra quello dei due stage è che il primo dipende dall'output del secondo ossia, non possiamo generare la seconda generazione prima che sia stata generata la prima.
+In realtà complicando la logica è possibile eliminare questa barriera ma ci ritroveremo comunque con il bottleneck della select.
+
 Utilizzando due worker nella farm:
     -select 1: 19,990,266
     -select 2: 20,119,832
+
+Cioè l'overhead creato della gestione di più thread e dall'accesso concorrente alla struttura dati rende la soluzione non praticabile.
+
+
 
 Heap separati: se assegniamo un heap a ciascun worker possiamo svolgere il lavoro in parallelo.
 Il problema è che il risultato sarà diverso:
