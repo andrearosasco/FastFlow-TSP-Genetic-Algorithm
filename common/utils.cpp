@@ -5,6 +5,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <random>
+#include <atomic>
 
 using namespace std;
 
@@ -69,6 +70,7 @@ public:
   }
 };
 
+std::atomic<int> acc_insert = 0;
 class SynchHeap {
   private:
     function<bool(vector<int>, vector<int>)> cmp;
@@ -81,13 +83,15 @@ class SynchHeap {
 
     bool check(vector<int> e){
       mutex.lock_shared();
-      bool res = cmp(e, heap.front());
+      auto f = heap.front();
       mutex.unlock_shared();
-      return res;
+      return cmp(e, f);;
     }
 
     void insert(vector<int> e){
+      auto t0 = chrono::system_clock::now();
       mutex.lock();
+      acc_insert += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t0).count();
       if(cmp(e, heap.front())){
         pop_heap(heap.begin(), heap.end(), cmp); heap.pop_back();
         heap.push_back(e); push_heap(heap.begin(), heap.end(), cmp);

@@ -12,7 +12,7 @@ vector<vector<int>> get_first_generation(int population_size, int gene_size){
     for(int i = 0; i < population_size; i++) {
         vector<int> *gene = new vector<int>(gene_size);
         iota(gene->begin(), gene->end(), 1);
-        random_shuffle ( gene->begin(), gene->end() );
+        random_shuffle ( gene->begin(), gene->end(), rand_x() );
         res[i] = *gene;
     }
     return res;
@@ -24,8 +24,8 @@ vector<vector<int>*> crossover(const vector<int>& g1, const vector<int>& g2){
     vector<int> *ng1 = new vector<int>(g1);
     vector<int> *ng2 = new vector<int>(g2);
 
-    int p = rand() % g1.size();
-    int t = p + (rand() % (g1.size() - p));
+    int p = intRand(0, g1.size() - 1);
+    int t = intRand(p, g1.size() - 1);
 
     int p1 = p;
     int p2 = p;
@@ -52,8 +52,8 @@ vector<int>* mutation(const vector<int>& g) {
 
     auto l = max(1, (int)round(g.size() * 0.2));
     for(int i = 0; i < l; i++){
-        int p = rand() % g.size();
-        int t = rand() % g.size();
+        int p = intRand(0, g.size() - 1);
+        int t = intRand(0, g.size() - 1);
 
         auto aux = (*res)[p];
         (*res)[p] = (*res)[t];
@@ -66,10 +66,10 @@ vector<int>* mutation(const vector<int>& g) {
 vector<vector<int>> evolve(const vector<vector<int>>& chsomes) {
     vector<vector<int>> res(chsomes);
 
-    int po_crossover = 92; // percentuale di cromosomi per crossover (gli altri vengono mutati)
+    int po_crossover = 70; // percentuale di cromosomi per crossover (gli altri vengono mutati)
     int no_crossover = round(res.size() * po_crossover / 200.) * 2; //arrotonda al numero pari più vicino
 
-    random_shuffle (res.begin(), res.end());
+    random_shuffle (res.begin(), res.end(), rand_x());
 
     for(int j = 0; j < res.size(); j++) {
         if(j < no_crossover){

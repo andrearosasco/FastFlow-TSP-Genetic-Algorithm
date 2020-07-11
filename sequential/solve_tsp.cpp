@@ -1,9 +1,9 @@
 #include <iostream>
 #include <vector>
 
+#include "utils.cpp"
 #include "tsp.cpp"
 #include "genetic.cpp"
-#include "utils.cpp"
 
 using namespace std;
 
@@ -29,8 +29,9 @@ int main(int argc, char * argv[]) {
     // Evolution Loop
     auto cmp = [&](vector<int> x, vector<int> y) { return (graph.path_length(x)) < (graph.path_length(y)); };
 
-    auto genes = get_first_generation(k, p - 1);
-    make_heap(genes.begin(), genes.end(), cmp);
+    auto chsomes = get_first_generation(k, p - 1);
+    make_heap(chsomes.begin(), chsomes.end(), cmp);
+    vector<vector<int>> new_chsomes(k);
     int i;
     long exect;
     long acc = 0;
@@ -38,20 +39,10 @@ int main(int argc, char * argv[]) {
     auto t0 = chrono::system_clock::now();
     for(i = 0; i < g; i++){      
         auto t1 = chrono::system_clock::now();
-        auto new_genes = evolve(genes);
+        evolve(chsomes, new_chsomes);
         acc += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
         auto t2 = chrono::system_clock::now();
-        // for(int i = 0; i < new_genes.size(); i++){
-        //     auto t1 = chrono::system_clock::now();
-        //     if( graph.path_length(new_genes[i]) < graph.path_length(genes.front()) ){
-        //         pop_heap(genes.begin(), genes.end(), cmp);
-        //         genes.pop_back();
-        //         genes.push_back(new_genes[i]);
-        //         push_heap(genes.begin(), genes.end(), cmp);
-        //     }
-        //     acc += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
-        // }
-        natural_selection(genes, new_genes, cmp);
+        natural_selection(chsomes, new_chsomes, cmp);
         acc2 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t2).count();
     }
 
@@ -69,7 +60,7 @@ int main(int argc, char * argv[]) {
     cout << endl << "Best path: " << p << endl;
     
     
-    sort_heap(genes.begin(), genes.end(), cmp);
-    cout << "Best path found: " << graph.path_length(genes.front()) << endl;
+    sort_heap(chsomes.begin(), chsomes.end(), cmp);
+    cout << "Best path found: " << graph.path_length(chsomes.front()) << endl;
 
 }

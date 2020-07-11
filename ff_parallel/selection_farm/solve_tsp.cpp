@@ -1,13 +1,14 @@
 #include <iostream>
 #include <functional>
 #include <vector>
+#include <sstream>
 #include <ff/ff.hpp>
 #include <ff/pipeline.hpp>
 #include <ff/farm.hpp>
 
 #include "tsp.cpp"
 #include "utils.cpp"
-#include "genetic.cpp"
+#include "spec_genetic.cpp"
 
 using namespace std;
 using namespace ff;
@@ -19,14 +20,15 @@ class chsomesDispatch: public ff_node_t<std::vector<int>> {
         int c = 0, i = 0;
         int no_crossover;
     public:
-        chsomesDispatch(SynchHeap& heap, int g):heap(heap), g(g), k(heap.size()), no_crossover(round(k * 94 / 200.) * 2) {}
+        chsomesDispatch(SynchHeap& heap, int g):heap(heap), g(g), k(heap.size()), no_crossover(round(k * 70 / 200.) * 2) {}
         std::vector<int>* svc(std::vector<int> * task) {
+            auto t0 = chrono::system_clock::now();
             if (i < g){
                 if( task == nullptr || (task != nullptr && ++c == k)){
                     delete task;
                     c = 0;
                     auto chsomes = heap.get_v();
-                    random_shuffle (chsomes.begin(), chsomes.end());
+                    random_shuffle (chsomes.begin(), chsomes.end(), rand_x());
 
                     for(int j = 0; j < k; j++) {
                         if(j < no_crossover){
@@ -40,10 +42,18 @@ class chsomesDispatch: public ff_node_t<std::vector<int>> {
                     }
                     i++;
                 }
+                acc += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t0).count();
                 return GO_ON;
             }
+            acc += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t0).count();
             return EOS;
         }
+    int acc = 0;
+    void svc_end(){
+        std::ostringstream st;
+        st << "Evolve: " << acc << endl;
+        cout << st.str();
+    }
 };
 
 struct chsomesSelect: ff_node_t<std::vector<int>> {
@@ -58,12 +68,16 @@ struct chsomesSelect: ff_node_t<std::vector<int>> {
         return new_chsome;
     }
 
-    void svc_end(){cout << "Select: " << acc << endl;}
+    void svc_end(){
+        std::ostringstream st;
+        st << "Select " << get_my_id() << ": " << acc << endl;
+        cout << st.str();
+    }
 
     SynchHeap& heap;
     long acc = 0;
 };
-
+// extern int acc_insert;
 int main(int argc, char** argv) {
         //Nota: il nodo di partenza e di arrivo è sempre 0
     if(argc != 6){
@@ -109,4 +123,5 @@ int main(int argc, char** argv) {
  
     heap.sort();
     cout << "Best path found: " << graph.path_length(heap.get_v().front()) << endl;
+    cout << "Total time waited on write lock: " << acc_insert << " us" << endl;
 }
