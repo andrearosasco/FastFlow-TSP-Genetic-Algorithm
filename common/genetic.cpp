@@ -7,27 +7,27 @@
 
 using namespace std;
 
-vector<vector<int>> get_first_generation(int population_size, int gene_size){
+vector<vector<int>> get_first_generation(int population_size, int gene_size, Rand r){
     vector<vector<int>> res(population_size);
     for(int i = 0; i < population_size; i++) {
         vector<int> *gene = new vector<int>(gene_size);
         iota(gene->begin(), gene->end(), 1);
-        random_shuffle ( gene->begin(), gene->end(), rand_x() );
+        random_shuffle ( gene->begin(), gene->end(), r);
         res[i] = *gene;
     }
     return res;
 }
 
 //possibilmente da vettorializzare
-vector<vector<int>> crossover(const vector<int>& g1, const vector<int>& g2){
+vector<vector<int>> crossover(const vector<int>& g1, const vector<int>& g2, Rand r){
 
     vector<int> ng1 = g1;
     vector<int> ng2 = g2;
     // stringstream stream;
     // auto t1 = chrono::system_clock::now();
 
-    int p = intRand(0, g1.size() - 1);
-    int t = intRand(p, g1.size() - 1);
+    int p = r.intRand(0, g1.size() - 1);
+    int t = r.intRand(p, g1.size() - 1);
 
     int p1 = p;
     int p2 = p;
@@ -53,16 +53,14 @@ vector<vector<int>> crossover(const vector<int>& g1, const vector<int>& g2){
     return res;
 }
 
-vector<int> mutation(const vector<int>& g) {
+vector<int> mutation(const vector<int>& g, Rand r) {
     vector<int> res = g;
 
-    auto l = max(1, (int)round(g.size() * 0.2));
-
-    
+    auto l = 1;// max(1, (int)round(g.size() * 0.1));
 
     for(int i = 0; i < l; i++){
-        int p = intRand(0, g.size() - 1);
-        int t = intRand(0, g.size() - 1);
+        int p = r.intRand(0, g.size() - 1);
+        int t = r.intRand(0, g.size() - 1);
 
         auto aux = res[p];
         res[p] = res[t];
@@ -72,23 +70,24 @@ vector<int> mutation(const vector<int>& g) {
 }
 
 
-void evolve(const vector<vector<int>>& chsomes, vector<vector<int>>& res) {
+void evolve(const vector<vector<int>>& chsomes, vector<vector<int>>& res, Rand r) {
 
-    for(int i = 0; i < chsomes.size(); i++)
+    for(int i = 0; i < chsomes.size(); i++){
         res[i] = chsomes[i];
+    }
 
     int po_crossover = 70; // percentuale di cromosomi per crossover (gli altri vengono mutati)
     int no_crossover = round(res.size() * po_crossover / 200.) * 2; //arrotonda al numero pari più vicino
 
-    random_shuffle (res.begin(), res.end(), rand_x());
+    random_shuffle (res.begin(), res.end(), r);
 
     for(int j = 0; j < res.size(); j++) {
         if(j < no_crossover){
-            auto aux = crossover(res[j], res[j+1]); j++;
+            auto aux = crossover(res[j], res[j+1], r); j++;
             res[j] = aux[0];
             res[j+1] = aux[1];
         } else {
-            auto aux = mutation(res[j]);
+            auto aux = mutation(res[j], r);
             res[j] = aux;
         }
     }

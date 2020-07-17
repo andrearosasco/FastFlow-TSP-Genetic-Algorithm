@@ -18,7 +18,6 @@ void print_vector(std::vector<int> v){
 
 bool has_duplicates(std::vector<int> v){
     sort(v.begin(), v.end());
-    auto it = std::unique( v.begin(), v.end() );
     bool wasUnique = std::adjacent_find(v.begin(), v.end()) != v.end();
     return wasUnique;
 }
@@ -142,9 +141,19 @@ public:
     }
 };
 
+struct Rand{
+  unsigned seed;
+  Rand(unsigned seed): seed(seed){}
 
-int intRand(const int & min, const int & max) {
-        static thread_local std::mt19937 generator;
-        std::uniform_int_distribution<int> distribution(min,max);
+  int intRand(const int & min, const int & max) {
+          static thread_local std::mt19937 generator(seed);
+          std::uniform_int_distribution<int> distribution(min,max);
+          return distribution(generator);
+  }
+
+  int operator()(int limit) {
+        static thread_local std::mt19937 generator(seed);
+        std::uniform_int_distribution<int> distribution(0,limit-1);
         return distribution(generator);
-}
+    }
+};

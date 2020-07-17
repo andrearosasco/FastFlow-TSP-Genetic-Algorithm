@@ -22,9 +22,17 @@ struct Genetic: ff_node_t<std::vector<int>> {
     vector<int>* svc(vector<int>*) {
         int acc1 = 0;
         int acc2 = 0;
+
+        // rand_x r;
+        // for(int i = 0; i < get_my_id() * 10; i++){
+        //     auto x = intRand(0, p);
+        //     auto y = r(p);
+        // }
         
-        Rand r(s + get_my_id());
-        auto chsomes = get_first_generation(k, p - 1, r);
+        auto chsomes = get_first_generation(k, p - 1);
+
+        // cout << "worker " << get_my_id() << ": ";
+        // print_vector(chsomes[0]);
 
         vector<vector<int>> new_chsomes(k);
         make_heap(chsomes.begin(), chsomes.end(), cmp);
@@ -32,7 +40,7 @@ struct Genetic: ff_node_t<std::vector<int>> {
         auto t0 = chrono::system_clock::now();
         for(int i = 0; i < gen; i++){  
             auto t1 = chrono::system_clock::now();
-            evolve(chsomes, new_chsomes, r);
+            evolve(chsomes, new_chsomes);
             acc1 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
             auto t2 = chrono::system_clock::now();
             natural_selection(chsomes, new_chsomes, cmp);

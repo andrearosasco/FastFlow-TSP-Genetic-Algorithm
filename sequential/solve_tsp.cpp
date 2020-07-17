@@ -19,6 +19,7 @@ int main(int argc, char * argv[]) {
     int s = atoi(argv[4]); // seed for random weight
 
     srand(s);
+    Rand r(s);
     // Problem Setup
     TspGraph graph(p);
     // Set a best path so we can be sure the algorithm finds it
@@ -29,7 +30,7 @@ int main(int argc, char * argv[]) {
     // Evolution Loop
     auto cmp = [&](vector<int> x, vector<int> y) { return (graph.path_length(x)) < (graph.path_length(y)); };
 
-    auto chsomes = get_first_generation(k, p - 1);
+    auto chsomes = get_first_generation(k, p - 1, r);
     make_heap(chsomes.begin(), chsomes.end(), cmp);
     vector<vector<int>> new_chsomes(k);
     int i;
@@ -39,7 +40,7 @@ int main(int argc, char * argv[]) {
     auto t0 = chrono::system_clock::now();
     for(i = 0; i < g; i++){      
         auto t1 = chrono::system_clock::now();
-        evolve(chsomes, new_chsomes);
+        evolve(chsomes, new_chsomes, r);
         acc += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
         auto t2 = chrono::system_clock::now();
         natural_selection(chsomes, new_chsomes, cmp);
