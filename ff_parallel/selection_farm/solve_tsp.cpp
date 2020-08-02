@@ -8,7 +8,7 @@
 
 #include "tsp.cpp"
 #include "utils.cpp"
-#include "spec_genetic.cpp"
+#include "genetic.cpp"
 
 using namespace std;
 using namespace ff;
@@ -77,9 +77,8 @@ struct chsomesSelect: ff_node_t<std::vector<int>> {
     SynchHeap& heap;
     long acc = 0;
 };
-// extern int acc_insert;
+
 int main(int argc, char** argv) {
-        //Nota: il nodo di partenza e di arrivo è sempre 0
     if(argc != 6){
         cout << "Wrong number of parameters" << endl;
         exit(1);

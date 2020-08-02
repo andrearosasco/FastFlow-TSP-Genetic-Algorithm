@@ -9,27 +9,6 @@
 
 using namespace std;
 
-void print_vector(std::vector<int> v){
-    for(int i = 0; i < v.size(); i++){
-        std::cout << v[i] << " ";
-    }
-    std::cout << std::endl;
-}
-
-bool has_duplicates(std::vector<int> v){
-    sort(v.begin(), v.end());
-    bool wasUnique = std::adjacent_find(v.begin(), v.end()) != v.end();
-    return wasUnique;
-}
-
-double factorial(int n) {
-    double res = 1;
-    for (int i = 0; i < n; i++){
-        res *= (i + 1);
-    }
-    return res;
-}
-
 
 #define START(timename) auto timename = std::chrono::system_clock::now();
 #define STOP(timename,elapsed)  auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - timename).count();
@@ -113,21 +92,6 @@ class SynchHeap {
     }
 };
 
-// class intRand { 
-//     unsigned int seed;
-// public:
-//     intRand(unsigned seed) : seed(seed) {}
-
-//     int operator()(int limit) {
-//         return (*this)(0, limit);
-//     }
-
-//     int operator()(const int & min, const int & max){
-//       static thread_local std::mt19937 generator(seed);
-//       std::uniform_int_distribution<int> distribution(min,max);
-//       return distribution(generator);
-//     } 
-// };
 
 class rand_x { 
 
@@ -142,9 +106,8 @@ public:
 };
 
 
-
 int intRand(const int & min, const int & max) {
-        static thread_local std::mt19937 generator(time(NULL));
+        static thread_local std::mt19937 generator;
         std::uniform_int_distribution<int> distribution(min,max);
         return distribution(generator);
 }

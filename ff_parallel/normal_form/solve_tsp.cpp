@@ -13,49 +13,61 @@
 using namespace std;
 using namespace ff;
 
-struct Genetic: ff_node_t<std::vector<int>> {
-    Genetic(int k, int gen, int p, function<bool(vector<int>, vector<int>)> cmp, unsigned s): k(k), gen(gen), p(p), cmp(cmp), s(s) {}
-    function<bool(vector<int>, vector<int>)> cmp;
+// #define DEBUG
+
+struct Genetic: ff_node_t<std::vector<unsigned char>> {
+    Genetic(int k, int gen, int p, function<bool(vector<unsigned char>, vector<unsigned char>)> cmp, unsigned s): k(k), gen(gen), p(p), cmp(cmp), s(s) {}
+    function<bool(vector<unsigned char>, vector<unsigned char>)> cmp;
     int k, gen, p;
     unsigned s;
 
-    vector<int>* svc(vector<int>*) {
+    vector<unsigned char>* svc(vector<unsigned char>*) {
         int acc1 = 0;
         int acc2 = 0;
         
         Rand r(s + get_my_id());
         auto chsomes = get_first_generation(k, p - 1, r);
 
-        vector<vector<int>> new_chsomes(k);
+        vector<vector<unsigned char>> new_chsomes(k);
         make_heap(chsomes.begin(), chsomes.end(), cmp);
 
-        auto t0 = chrono::system_clock::now();
+        #ifdef DEBUG
+            auto t0 = chrono::system_clock::now();
+        #endif
         for(int i = 0; i < gen; i++){  
-            auto t1 = chrono::system_clock::now();
+            #ifdef DEBUG
+                auto t1 = chrono::system_clock::now();
+            #endif
             evolve(chsomes, new_chsomes, r);
-            acc1 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
-            auto t2 = chrono::system_clock::now();
+            #ifdef DEBUG
+                acc1 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
+                auto t2 = chrono::system_clock::now();
+            #endif
             natural_selection(chsomes, new_chsomes, cmp);
-            acc2 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t2).count();
+            #ifdef DEBUG
+                acc2 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t2).count();
+            #endif
         }
-        auto elapsed = chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t0).count();
-        std::ostringstream st;
-        st << "Worker " << get_my_id() << " Time: " << elapsed << " us"; 
-        st << " Evolve: " << acc1  << " us";
-        st << " Select: " << acc2  << " us" << endl;
-        cout << st.str();
+        #ifdef DEBUG
+            auto elapsed = chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t0).count();
+            std::ostringstream st;
+            st << "Worker " << get_my_id() << " Time: " << elapsed << " us"; 
+            st << " Evolve: " << acc1  << " us";
+            st << " Select: " << acc2  << " us" << endl;
+            cout << st.str();
+        #endif
         sort_heap(chsomes.begin(), chsomes.end(), cmp);
-        vector<int>* res = new vector<int>(chsomes.front());
+        vector<unsigned char>* res = new vector<unsigned char>(chsomes.front());
         return res;
     }
 };
 
-struct CollectSelect: ff_node_t<std::vector<int>> {
-    CollectSelect(function<bool(vector<int>, vector<int>)> cmp): cmp(cmp) {}
-    function<bool(vector<int>, vector<int>)> cmp;
-    vector<int>* best = NULL;
+struct CollectSelect: ff_node_t<std::vector<unsigned char>> {
+    CollectSelect(function<bool(vector<unsigned char>, vector<unsigned char>)> cmp): cmp(cmp) {}
+    function<bool(vector<unsigned char>, vector<unsigned char>)> cmp;
+    vector<unsigned char>* best = NULL;
 
-    vector<int>* svc(vector<int>* chsome) {
+    vector<unsigned char>* svc(vector<unsigned char>* chsome) {
         if(best == NULL)
             best = chsome;
         else
@@ -66,7 +78,7 @@ struct CollectSelect: ff_node_t<std::vector<int>> {
 
 
 int main(int argc, char** argv) {
-        //Nota: il nodo di partenza e di arrivo è sempre 0
+
     if(argc != 6){
         cout << "Wrong number of parameters" << endl;
         exit(1);
@@ -77,21 +89,23 @@ int main(int argc, char** argv) {
     int nw = atoi(argv[4]); //number of workers
     int s = atoi(argv[5]); // seed
 
+    k = k / nw; //uncomment to measure parallel performance 
+
     srand(s);
     // Problem Setup
     TspGraph graph(p);
     // Set a best path so we can be sure the algorithm finds it
-    vector<int> best(p - 1);
+    vector<unsigned char> best(p - 1);
     iota(best.begin(), best.end(), 1);
     random_shuffle (best.begin(), best.end() );
     graph.set_best_path(best);
     
     // Compare function
-    auto cmp = [&](vector<int> x, vector<int> y) { return (graph.path_length(x)) < (graph.path_length(y)); };
+    auto cmp = [&](vector<unsigned char> x, vector<unsigned char> y) { return (graph.path_length(x)) < (graph.path_length(y)); };
 
     ff_Farm<float> farm( [&]() {
         std::vector<std::unique_ptr<ff_node> > W;
-        for(size_t i=0;i<nw;++i) W.push_back(make_unique<Genetic>(k / nw, g, p, cmp, s));
+        for(size_t i=0;i<nw;++i) W.push_back(make_unique<Genetic>(k, g, p, cmp, s));
         return W;
     } () );
 

@@ -10,34 +10,51 @@
 
 using namespace std;
 
-void genetic_loop(int k, int g, int p, function<bool(vector<int>, vector<int>)> cmp, int id, vector<int>* res){
+// #define DEBUG
 
-    int acc1 = 0;
-    int acc2 = 0;
-        
-    auto chsomes = get_first_generation(k, p - 1);
-    vector<vector<int>> new_chsomes(k);
-    make_heap(chsomes.begin(), chsomes.end(), cmp);
+struct Worker{
 
-    auto t0 = chrono::system_clock::now();
-    for(int i = 0; i < g; i++){  
-        auto t1 = chrono::system_clock::now();
-        evolve(chsomes, new_chsomes);
-        acc1 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
-        auto t2 = chrono::system_clock::now();
-        natural_selection(chsomes, new_chsomes, cmp);
-        acc2 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t2).count();
+    vector<unsigned char>* res = NULL;
+    Worker(){}
+
+    void genetic_loop(int k, int g, int p, int s, function<bool(vector<unsigned char>, vector<unsigned char>)> cmp, int id){
+
+        int acc1 = 0;
+        int acc2 = 0;
+        Rand r(s + id);
+            
+        auto chsomes = get_first_generation(k, p - 1, r);
+        vector<vector<unsigned char>> new_chsomes(k);
+        make_heap(chsomes.begin(), chsomes.end(), cmp);
+        #ifdef DEBUG
+        auto t0 = chrono::system_clock::now();
+        #endif
+        for(int i = 0; i < g; i++){  
+            #ifdef DEBUG
+            auto t1 = chrono::system_clock::now();
+            #endif
+            evolve(chsomes, new_chsomes, r);
+            #ifdef DEBUG
+            acc1 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t1).count();
+            auto t2 = chrono::system_clock::now();
+            #endif
+            natural_selection(chsomes, new_chsomes, cmp);
+            #ifdef DEBUG
+            acc2 += chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t2).count();
+            #endif
+        }
+        #ifdef DEBUG
+        auto elapsed = chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t0).count();
+        std::ostringstream st;
+        st << "Worker " << id << " Time: " << elapsed << " us"; 
+        st << " Evolve: " << acc1  << " us";
+        st << " Select: " << acc2  << " us" << endl;
+        cout << st.str();
+        #endif
+        sort_heap(chsomes.begin(), chsomes.end(), cmp);
+        res = new vector<unsigned char>(chsomes.front());
     }
-    auto elapsed = chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now() - t0).count();
-    std::ostringstream st;
-    st << "Worker " << id << " Time: " << elapsed << " us"; 
-    st << " Evolve: " << acc1  << " us";
-    st << " Select: " << acc2  << " us" << endl;
-    cout << st.str();
-    sort_heap(chsomes.begin(), chsomes.end(), cmp);
-    res = new vector<int>(chsomes.front());
-    print_vector(*res);
-}
+};
 
 int main(int argc, char** argv) {
         //Nota: il nodo di partenza e di arrivo è sempre 0
@@ -51,29 +68,30 @@ int main(int argc, char** argv) {
     int nw = atoi(argv[4]); //number of workers
     int s = atoi(argv[5]); // seed
 
+    k = k / nw;
+
     srand(s);
     // Problem Setup
     TspGraph graph(p);
     // Set a best path so we can be sure the algorithm finds it
-    vector<int> best_path(p - 1);
+    vector<unsigned char> best_path(p - 1);
     iota(best_path.begin(), best_path.end(), 1);
     random_shuffle (best_path.begin(), best_path.end() );
     graph.set_best_path(best_path);
     
     // Compare function
-    auto cmp = [&](vector<int> x, vector<int> y) { return (graph.path_length(x)) < (graph.path_length(y)); };
+    auto cmp = [&](vector<unsigned char> x, vector<unsigned char> y) { return (graph.path_length(x)) < (graph.path_length(y)); };
 
-    vector<int> best;
     long time;
     {
         utimer ts{"Total time", &time};
 
         vector<thread> threads(nw);
-        vector<vector<int>*> res(nw);
+        std::vector<std::unique_ptr<Worker>> W(nw);
+
         for(int i = 0; i < nw; i++){
-            vector<int>* r;
-            res[i] = r;
-            threads[i] = std::thread([&]() { genetic_loop(k / nw, g, p, cmp, i, r); } );
+            W[i] = make_unique<Worker>();
+            threads[i] = std::thread([&, i]() { W[i]->genetic_loop(k, g, p, s, cmp, i); } );
 
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
@@ -81,18 +99,17 @@ int main(int argc, char** argv) {
             pthread_setaffinity_np(threads[i].native_handle(), sizeof(cpu_set_t), &cpuset);
         }
 
-        for (int i = 0; i < nw; i++) {
-            // cout << "Joining " << i << endl;
-            threads[i].join();
-            // cout << "Joined " << i << endl;
+        vector<unsigned char>* best = NULL; 
 
-            // auto chsome = *(res[i]);
-            // print_vector(chsome);
-            // if(best.size() == 0)
-            //     best = chsome;
-            // else
-            //     best = cmp(chsome, best) ? chsome : best;
+        for (int i = 0; i < nw; i++) {
+            threads[i].join();
+            auto chsome = W[i]->res;
+
+            if(best == NULL)
+                best = chsome;
+            else
+                best = cmp(*chsome, *best) ? chsome : best;
         }
+        cout << "Best path found: " << graph.path_length(*best) << endl;
     }
-    // cout << "Best path found: " << graph.path_length(best) << endl;
 }
