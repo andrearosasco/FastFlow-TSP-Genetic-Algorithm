@@ -33,7 +33,7 @@ two implementations with the Fastflow framework
 #### std_parallel
 two implementations with std C++ concurrency mechanisms
 - async - use of async calls with no thread pinning
- -thread - use of thread calls with thread pinning (best performances)
+- thread - use of thread calls with thread pinning (best performances)
 
 #### scripts
 three python scripts
